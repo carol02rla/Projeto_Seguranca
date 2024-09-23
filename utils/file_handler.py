@@ -3,8 +3,8 @@ class FileHandler:
     data = None
 
     def __init__(self, file_path):
-        file = open(file_path, 'r', encoding='utf-8')
-        self.data = file.read()
+        with open(file_path, 'r', encoding='utf-8') as file:
+            self.data = file.read()
 
     def get_users(self):
         lines = self.data.splitlines()
@@ -19,5 +19,13 @@ class FileHandler:
         mat = []
         for line in lines:
             mat.append(line.split(" ")[0])
+
+        return mat
+    
+    def get_nomes(self):
+        lines = self.data.splitlines()
+        mat = []
+        for line in lines:
+            mat.append(line.split(" ")[1])
 
         return mat
