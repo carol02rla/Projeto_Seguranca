@@ -146,7 +146,7 @@ class PasswordPermutation:
             passwords.add(f"{name}{i * '1'}")
 
         # Variação com Nome e 2 números
-        name_with_capital_initial = name.lower().replace(name.lower()[0], name[0], 1)
+        name_with_capital_initial = first_name.lower().replace(name.lower()[0], name[0], 1)
         for i in range(1, 4):
             for j in range(1, 4):
                 passwords.add(f"{name_with_capital_initial}{i}{j}")
@@ -185,5 +185,9 @@ class PasswordPermutation:
         ]
 
         passwords.update(common_variants)
+        passwords = list(passwords)
+        passwords.sort()
 
-        return random.sample(list(passwords), k=max_num)
+        max_num = min(max_num, len(passwords))
+        
+        return random.sample(passwords, k=max_num)
