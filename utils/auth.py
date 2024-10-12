@@ -7,7 +7,7 @@ import logging
 
 IGNORED_EXCEPTIONS = (NoSuchElementException,StaleElementReferenceException)
 
-def login(driver, usuario, senha):
+def login(driver, usuario, senha, exit=True):
     logging.info(f"Login for {usuario} user with {senha} password")
     usuario_field = driver.find_element(By.XPATH, '//*[@name="form:login"]')
     usuario_field.clear()
@@ -25,13 +25,15 @@ def login(driver, usuario, senha):
         )
         assert portal_discente.text.strip() == "Portal do Discente", f"Erro ao acessar o sistema.\n"
         logging.info("Sucesso na autenticacao.")
-        sair = WebDriverWait(driver, 20, ignored_exceptions=IGNORED_EXCEPTIONS).until(
-            EC.element_to_be_clickable((By.XPATH, '//*[@class= "icone-sair"]'))
-        )
-        sair.click()
-        acessar_tela = WebDriverWait(driver, 20, ignored_exceptions=IGNORED_EXCEPTIONS).until(
-            EC.element_to_be_clickable((By.XPATH, '//*[@title="Acessar o SIGAA"]'))
-        )
-        acessar_tela.click()
+
+        if exit:
+            sair = WebDriverWait(driver, 20, ignored_exceptions=IGNORED_EXCEPTIONS).until(
+                EC.element_to_be_clickable((By.XPATH, '//*[@class= "icone-sair"]'))
+            )
+            sair.click()
+            acessar_tela = WebDriverWait(driver, 20, ignored_exceptions=IGNORED_EXCEPTIONS).until(
+                EC.element_to_be_clickable((By.XPATH, '//*[@title="Acessar o SIGAA"]'))
+            )
+            acessar_tela.click()
     else:
         logging.info("Usuario e/ou senha invalidos.")
