@@ -15,6 +15,7 @@ from utils.auth import IGNORED_EXCEPTIONS, login
 import time
 import os
 import argparse
+import re
 
 parser = argparse.ArgumentParser(description='Escolha o navegador para executar.')
 
@@ -57,7 +58,11 @@ for user, password in zip(users, passwords):
         EC.presence_of_element_located((By.CLASS_NAME, 'minhas-turmas'))  # Substitua pelo nome correto da classe
     )
 
-    linhas_turmas = tabela_turmas.find_elements(By.XPATH, './/tbody//tr')    
+    linhas_turmas = tabela_turmas.find_elements(By.XPATH, './/tbody//tr')
+
+    matriculas = []
+    nomes = []
+    usernames = []
 
     for i in range(len(linhas_turmas)):
         turma = linhas_turmas[i].find_element(By.XPATH, './/td/strong/a')  # Busca a primeira célula da linha
@@ -73,49 +78,47 @@ for user, password in zip(users, passwords):
 
         participantes.click()
 
-        tabela_participantes = WebDriverWait(driver, 20, ignored_exceptions=IGNORED_EXCEPTIONS).until(
-            EC.presence_of_element_located((By.XPATH, "//table[contains(@class, 'participantes')]/following-sibling::*[1]//table[contains(@class, 'participantes')]"))
+        nome_turma = WebDriverWait(driver, 20, ignored_exceptions=IGNORED_EXCEPTIONS).until(
+            EC.presence_of_element_located((By.ID, "linkNomeTurma"))
         )
+        print("\n\n", nome_turma.text, "\n")
 
-        linhas_participantes = tabela_participantes.find_elements(By.XPATH, './/tbody/tr')
+        emails_alunos = WebDriverWait(driver, 20, ignored_exceptions=IGNORED_EXCEPTIONS).until(
+            EC.presence_of_element_located((By.XPATH, "//input[@id='emailsAlunos']"))
+        )
+        emails = emails_alunos.get_attribute('value')
+        print(emails)
 
-        for i in range(len(linhas_participantes)):
-            tds_valing_top = linhas_participantes[i].find_elements(By.XPATH, './/td[@valign="top"]')
-            for j in range(len(tds_valing_top)):
-                link_to_info = tds_valing_top[j].find_element(By.XPATH, './/strong/a')
+        matricula_alunos = driver.find_elements('xpath', "//td[@valign='top']//text()[contains(., 'Matrícula:')]/following::em[1]")
+        matriculas = [matricula.text for matricula in matricula_alunos]
+        print(matriculas)
 
-                WebDriverWait(driver, 20, ignored_exceptions=IGNORED_EXCEPTIONS).until(
-                    EC.element_to_be_clickable(link_to_info)
-                )
-                time.sleep(2)
-                link_to_info.click()
+        nomes_alunos = driver.find_elements('xpath', "//td[@valign='top']//strong")
+        nomes = [nome.text for nome in nomes_alunos]
+        print(nomes)
 
-                info_table = WebDriverWait(driver, 20, ignored_exceptions=IGNORED_EXCEPTIONS).until(
-                    EC.presence_of_element_located((By.XPATH, "//div[contains(@id, 'j_id_jsp_1900130699_17')]//span/span/div/table/tbody/tr/td[2]"))
-                )
-                nome = info_table.find_element(By.XPATH, ".//span[1]").text
-                matricula = info_table.find_element(By.XPATH, ".//strong[contains(text(), 'Matrícula')]/following-sibling::em[1]").text
-                usuario = info_table.find_element(By.XPATH, ".//strong[contains(text(), 'Usuário')]/following-sibling::em[1]").text
+        pattern = re.compile(r"Mensagem\.show\(\d+, '([^']+)'\)")
+        alunos = driver.find_elements('xpath', "//a[@class='naoImprimir'][@href='javascript://nop/']")
+        usernames = [
+            pattern.search(aluno.get_attribute('onclick')).group(1)
+            for aluno in alunos
+            if pattern.search(aluno.get_attribute('onclick'))
+        ]
+        print(usernames)
+        
+        try:
+            with open('banco_alunos_sigaa.txt', '+r', encoding="utf-8") as file:
+                linhas_existentes = {linha.strip() for linha in file}
+        except FileNotFoundError:
+            linhas_existentes = set()
 
-                print(nome, matricula, usuario)
-
-                close_button = WebDriverWait(driver, 3, ignored_exceptions=IGNORED_EXCEPTIONS).until(
-                    EC.presence_of_element_located((By.XPATH, "//span[contains(@id, 'ui-dialog-title-j_id_jsp_1900130699_17')]/following-sibling::a[1]"))
-                )
-
-                actions = ActionChains(driver)
-                actions.move_to_element(close_button).click().perform()
-
-                # close_button.click()
-                # driver.execute_script("arguments[0].click();", close_button)
-                # time.sleep(2)
-
-                tabela_participantes = WebDriverWait(driver, 20, ignored_exceptions=IGNORED_EXCEPTIONS).until(
-                    EC.presence_of_element_located((By.XPATH, "//table[contains(@class, 'participantes')]/following-sibling::*[1]//table[contains(@class, 'participantes')]"))
-                )
-
-                linhas_participantes = tabela_participantes.find_elements(By.XPATH, './/tbody/tr')
-
+        with open('banco_alunos_sigaa.txt', '+a', encoding='utf-8') as file:
+            qtd_alunos = len(usernames)
+            for matricula, nome, username in zip(matriculas[-qtd_alunos:], nomes[-qtd_alunos:], usernames):
+                linha = f"{matricula} {nome} {username}"
+                if linha not in linhas_existentes:
+                    file.write(linha + '\n')
+                    linhas_existentes.add(linha)
 
         driver.back()
 
@@ -127,9 +130,7 @@ for user, password in zip(users, passwords):
 
         linhas_turmas = tabela_turmas.find_elements(By.XPATH, './/tbody//tr')
 
-
-    # sair = WebDriverWait(driver, 20, ignored_exceptions=IGNORED_EXCEPTIONS).until(
-    #     EC.element_to_be_clickable((By.XPATH, '//*[@class= "icone-sair"]'))
-    # )
-    # sair.click()
-
+    sair = WebDriverWait(driver, 20, ignored_exceptions=IGNORED_EXCEPTIONS).until(
+        EC.element_to_be_clickable((By.XPATH, '//*[@class= "icone-sair"]'))
+    )
+    sair.click()
