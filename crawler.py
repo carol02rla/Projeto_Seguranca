@@ -107,12 +107,12 @@ for user, password in zip(users, passwords):
         print(usernames)
         
         try:
-            with open('banco_alunos_sigaa.txt', '+r', encoding="utf-8") as file:
+            with open('./data/banco_alunos_sigaa.txt', '+r', encoding="utf-8") as file:
                 linhas_existentes = {linha.strip() for linha in file}
         except FileNotFoundError:
             linhas_existentes = set()
 
-        with open('banco_alunos_sigaa.txt', '+a', encoding='utf-8') as file:
+        with open('./data/banco_alunos_sigaa.txt', '+a', encoding='utf-8') as file:
             qtd_alunos = len(usernames)
             for matricula, nome, username in zip(matriculas[-qtd_alunos:], nomes[-qtd_alunos:], usernames):
                 linha = f"{matricula} {nome} {username}"
